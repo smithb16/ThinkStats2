@@ -4,7 +4,7 @@ by Allen B. Downey, available from greenteapress.com
 Copyright 2014 Allen B. Downey
 License: GNU GPLv3 http://www.gnu.org/licenses/gpl.html
 """
-
+## module import
 from __future__ import print_function, division
 
 import numpy as np
@@ -16,16 +16,16 @@ import thinkstats2
 """
 Sample line.
 
-Place Div/Tot  Div   Guntime Nettime  Pace  Name                   Ag S Race# City/state              
-===== ======== ===== ======= =======  ===== ====================== == = ===== ======================= 
-   97  26/256  M4049   42:48   42:44   6:53 Allen Downey           42 M   337 Needham MA 
+Place Div/Tot  Div   Guntime Nettime  Pace  Name                   Ag S Race# City/state
+===== ======== ===== ======= =======  ===== ====================== == = ===== =======================
+   97  26/256  M4049   42:48   42:44   6:53 Allen Downey           42 M   337 Needham MA
 """
-
+## function definition
 def ConvertPaceToSpeed(pace):
     """Converts pace in MM:SS per mile to MPH."""
     m, s = [int(x) for x in pace.split(':')]
     secs = m*60 + s
-    mph  = 1 / secs * 60 * 60 
+    mph  = 1 / secs * 60 * 60
     return mph
 
 
@@ -34,7 +34,7 @@ def CleanLine(line):
     t = line.split()
     if len(t) < 6:
         return None
-    
+
     place, divtot, div, gun, net, pace = t[0:6]
 
     if not '/' in divtot:
@@ -81,19 +81,41 @@ def BinData(data, low, high, n):
     data = np.round(data) * (high - low) / n + low
     return data
 
+def ObservedPmf(pmf, v=7.5, label=None):
+    """Calculates the observed pmf of a runner at
+    speed 'v' observing other runners distributed per 'pmf'
+
+    pmf: thinkstats2.Pmf
+    v: float, velocity
+    """
+    observed_pmf = pmf.Copy(label=label)
+
+    for x, p in pmf.Items():
+        observed_pmf.Mult(x,np.abs(x-v))
+
+    observed_pmf.Normalize()
+    return observed_pmf
 
 def main():
+    ## extract data
     results = ReadResults()
     speeds = GetSpeeds(results)
 
     speeds = BinData(speeds, 3, 12, 100)
 
+    ## make and plot pmfs
     pmf = thinkstats2.Pmf(speeds, 'speeds')
+    observed_pmf = ObservedPmf(pmf, label='observed')
 
-    thinkplot.Pmf(pmf)
-    thinkplot.Show(title='PMF of running speed',
-                   xlabel='speed (mph)',
-                   ylabel='probability')
+    thinkplot.PrePlot(2)
+    thinkplot.Pmfs([pmf, observed_pmf])
+    thinkplot.Show(xlabel='speed (mph)',
+                   axis=[4,12, 0,0.1])
+
+    #thinkplot.Pmf(pmf)
+    #thinkplot.Show(title='PMF of running speed',
+    #               xlabel='speed (mph)',
+    #               ylabel='probability')
 
 
 if __name__ == '__main__':

@@ -433,13 +433,6 @@ class Hist(_DictWrapper):
         for val, freq in other.Items():
             self.Incr(val, -freq)
 
-    def Mode(self):
-        """Gets the most common value in the distribution.
-        return: float index
-        """
-        _, val = max((count, val) for val, count in self.Items())
-
-
 class Pmf(_DictWrapper):
     """Represents a probability mass function.
 
@@ -625,6 +618,18 @@ class Pmf(_DictWrapper):
         """
         _, val = max((prob, val) for val, prob in self.Items())
         return val
+
+    def AllMode(self):
+        """Gets the value-frequency pairs in descending order.
+
+        return: list of tuple of (value, count)
+        """
+        def second(tup):
+            """Returns second element in tuple."""
+            return tup[1]
+
+        t = [(val, count) for val, count in self.Items()]
+        return sorted(t, key=second, reverse=True)
 
     # The mode of a posterior is the maximum aposteori probability (MAP)
     MAP = Mode
