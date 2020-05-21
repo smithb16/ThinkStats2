@@ -92,14 +92,14 @@ def ValidatePregnum(resp, preg):
     preg_map = MakePregMap(preg)
 
     # iterate through the respondent pregnum series for index, pregnum in resp.pregnum.iteritems():
-        caseid = resp.caseid[index]
-        indices = preg_map[caseid]
+    caseid = resp.caseid[index]
+    indices = preg_map[caseid]
 
-        # check that pregnum from the respondent file equals
-        # the number of records in the pregnancy file
-        if len(indices) != pregnum:
-            print(caseid, len(indices), pregnum)
-            return False
+    # check that pregnum from the respondent file equals
+    # the number of records in the pregnancy file
+    if len(indices) != pregnum:
+        print(caseid, len(indices), pregnum)
+        return False
 
     return True
 
