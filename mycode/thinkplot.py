@@ -7,6 +7,7 @@ License: GNU GPLv3 http://www.gnu.org/licenses/gpl.html
 
 from __future__ import print_function
 
+import thinkstats2
 import math
 import matplotlib
 import matplotlib.pyplot as plt
@@ -112,7 +113,7 @@ def _UnderrideColor(options):
 
     try:
         options['color'] = next(color_iter)
-    except StopIteration:
+    except RuntimeError:
         # if you run out of colors, initialize the color iterator
         # and try again
         warnings.warn('Ran out of colors.  Starting over.')
@@ -241,7 +242,6 @@ def Plot(obj, ys=None, style='', **options):
     else:
         plt.plot(xs, ys, style, **options)
 
-
 def Vlines(xs, y1, y2, **options):
     """Plots a set of vertical lines.
 
@@ -269,6 +269,21 @@ def Hlines(ys, x1, x2, **options):
     options = _Underride(options, linewidth=1, alpha=0.5)
     plt.hlines(ys, x1, x2, **options)
 
+def Line(m, b, xmin, xmax, **options):
+    """Plots a line of form y = m*x + b
+    Args:
+      m: float - slope
+      b: float - y intercept
+      xmin: float - minimum x value
+      xmax: float - maximum x value
+      options: keyword args passed to plt.axvline
+    """
+    options = _UnderrideColor(options)
+    options = _Underride(options, linewidth=1, alpha=0.5)
+    xs = np.array([xmin, xmax])
+    ys = m * xs + b
+    print('xs, ys:\n', xs, ys)
+    plt.plot(xs, ys)
 
 def axvline(x, **options):
     """Plots a vertical line.
@@ -855,6 +870,81 @@ def SaveFormat(root, fmt='eps', **options):
     print('Writing', filename)
     plt.savefig(filename, format=fmt, **options)
 
+def CDFVisualDist(cdf):
+    xs, ps = cdf.xs, cdf.ps
+
+    # set up subplots
+    PrePlot(num=6, cols=3, rows=2)
+
+    # linear plot
+    SubPlot(1)
+    Cdf(cdf, color='C0')
+    Config(xlabel='x', ylabel='CDF',
+                     title='Linear Plot')
+
+    # lognormal plot
+    SubPlot(2)
+    xs_log = np.log10(xs)
+    cdf_log = thinkstats2.Cdf(xs_log, ps, label='data')
+    median = cdf_log.Percentile(50)
+    iqr = thinkstats2.IQRFromCDF(cdf_log)
+    std = thinkstats2.StdFromIQR(iqr)
+    low = np.nanmin(xs_log[xs_log != -np.inf])
+    high = np.nanmax(xs_log[xs_log != np.inf])
+
+    x_norm, p_norm = thinkstats2.RenderNormalCdf(median, std, low=low, high=high)
+    Plot(x_norm, p_norm, label='model', color='0.8')
+
+    Cdf(cdf_log, color='C0')
+    Config(xlabel='log10 x',
+                     ylabel='CDF',
+                     title='Lognormal Plot')
+
+    # pareto plot
+    SubPlot(3)
+
+    scale = Cdf(cdf, transform = 'pareto', color='C0')
+    Config(xlabel='x',
+                     ylabel='CCDF',
+                     title='Pareto Plot',
+                     **scale)
+
+    # exponential plot
+    SubPlot(4)
+    mean = cdf.NaNMean()
+    lam = 1/mean
+    low = np.nanmin(xs[xs != -np.inf])
+    high = np.nanmax(xs[xs != np.inf])
+    expo_xs, expo_ps = thinkstats2.RenderExpoCdf(lam, low, high)
+    Plot(expo_xs, 1-expo_ps, label='model', color='0.8')
+    scale = Cdf(cdf, transform='exponential', color='C0')
+    Config(xlabel='x',
+                     ylabel='CCDF',
+                     title='Exponential Plot',
+                     **scale)
+
+    # normal plot
+    SubPlot(5)
+    var = cdf.NaNVar()
+    std = np.sqrt(var)
+
+    low = mean - 4 * std
+    high = mean + 4 * std
+
+    norm_xs, norm_ps = thinkstats2.RenderNormalCdf(mean, std, low, high)
+    Cdf(cdf, color='C0')
+    Plot(norm_xs, norm_ps, label='model', linewidth=4, color='0.8')
+    Config(xlabel='x',
+                 ylabel='CDF',
+                 title='Normal Plot')
+
+    # weibull plot
+    SubPlot(6)
+    scale = Cdf(cdf, transform='weibull', color='C0')
+    Config(title='weibull transform',
+                 xlabel='log x',
+                 ylabel='log log CCDF', **scale)
+    Show()
 
 # provide aliases for calling functions with lower-case names
 preplot = PrePlot

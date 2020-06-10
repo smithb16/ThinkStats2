@@ -1265,6 +1265,39 @@ class Cdf:
             old_p = new_p
         return total
 
+    def NaNMean(self):
+        """Computes the mean of a CDF, ignoring NaN and inf.
+
+        returns:
+            float mean
+        """
+        old_p = 0
+        total = 0
+        for x, new_p in zip(self.xs, self.ps):
+            if (abs(x) == np.inf) or (x == np.nan):
+                x = 0
+            p = new_p - old_p
+            total += p * x
+            old_p = new_p
+        return total
+
+    def NaNVar(self):
+        """Computes the variance of a CDF from NaNMean
+
+        return:
+            float variance
+        """
+        mu = self.NaNMean()
+        old_p = 0
+        total = 0
+        for x, new_p in zip(self.xs, self.ps):
+            if (abs(x) == np.inf) or (x == np.nan):
+                x = mu
+            p = new_p - old_p
+            total += p * (x - mu)**2
+            old_p = new_p
+        return total
+
     def CredibleInterval(self, percentage=90):
         """Computes the central credible interval.
 
@@ -2796,6 +2829,11 @@ def IQR(xs):
     cdf = Cdf(xs)
     return cdf.Value(0.25), cdf.Value(0.75)
 
+def IQRFromCDF(cdf):
+    return cdf.Percentile(75) - cdf.Percentile(25)
+
+def StdFromIQR(iqr):
+    return iqr / 1.349
 
 def PearsonMedianSkewness(xs):
     """Computes the Pearson median skewness.
