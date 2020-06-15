@@ -2845,6 +2845,11 @@ def PearsonMedianSkewness(xs):
     gp = 3 * (mean - median) / std
     return gp
 
+def Kurtosis(xs):
+    return StandardizedMoment(xs, 4)
+
+def SampleExcessKertosis(xs):
+    return StandardizedMoment(xs, 4) - 3
 
 class FixedWidthVariables(object):
     """Represents a set of variables in a fixed width file."""

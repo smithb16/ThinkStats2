@@ -161,36 +161,6 @@ if __name__ == '__main__':
     df = hinc.ReadData()
 
     ## assess distribution
-    print('df.head:\n', df.head())
-    inc = df.income.values
-    ps = df.ps.values
-    cdf = thinkstats2.Cdf(inc, ps, label='income')
-    #thinkplot.Figure(figsize=(12,8))
-    #thinkplot.PrePlot(cols=3)
-    #thinkplot.SubPlot(1)
-    thinkplot.Cdf(cdf)
-    thinkplot.Show(xlabel='income',
-                   ylabel='CDF')
-
-    ## is distribution lognormal
-    #thinkplot.SubPlot(2)
-    thinkplot.PrePlot(2)
-    inc_log = np.log10(inc)
-    cdf_log = thinkstats2.Cdf(inc_log, ps, label='log10 income')
-    median = cdf_log.Percentile(50)
-    std = StdFromIQR(IQRFromCDF(cdf_log))
-    xs, sample_ps = thinkstats2.RenderNormalCdf(median, std, 3.5, 5.5)
-    thinkplot.Cdf(cdf_log)
-    thinkplot.Plot(xs, sample_ps, label='model', color='0.8')
-    thinkplot.Show(xlabel='log10 income', ylabel='CDF')
-
-    ## is distribution pareto
-    #thinkplot.SubPlot(3)
-    thinkplot.Cdf(cdf, complement=True)
-    xs, ys = thinkstats2.RenderParetoCdf(xmin=55000, alpha=2.5,
-                                         low=0, high=250000)
-    thinkplot.Plot(xs, 1-ys, label='model', color='0.8')
-    thinkplot.Show(xlabel='income',
-                   ylabel='CCDF',
-                   xscale='log',
-                   yscale='log')
+    xs, ps = df.income.values, df.ps.values
+    cdf = thinkstats2.Cdf(xs, ps, label='data')
+    thinkplot.CDFVisualDist(cdf)
