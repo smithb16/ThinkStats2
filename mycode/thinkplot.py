@@ -376,6 +376,91 @@ def HexBin(xs, ys, **options):
     plt.hexbin(xs, ys, **options)
 
 
+def CorrelationPlots(df, xlabel, ylabel, xjitter=0, yjitter=0, axis=None, nbins=5, **options):
+
+    cleaned = df.dropna(subset=[xlabel, ylabel])
+    xs = cleaned[xlabel]
+    ys = cleaned[ylabel]
+
+    xs = thinkstats2.Jitter(xs, xjitter)
+    ys = thinkstats2.Jitter(ys, yjitter)
+
+    xmin, xmax = min(xs), max(xs)
+    ymin, ymax = min(ys), max(ys)
+    if axis is None:
+        axis=[xmin, xmax, ymin, ymax]
+
+    PrePlot(num=4, rows=2, cols=2)
+
+    # make scatter plot
+    SubPlot(1)
+    Scatter(xs, ys, alpha=0.1, s=10)
+    Config(xlabel=xlabel,
+           ylabel=ylabel,
+           axis=axis,
+           legend=False)
+
+    # make HexBin plot
+    SubPlot(2)
+    HexBin(xs, ys)
+    Config(xlabel=xlabel,
+           ylabel=ylabel,
+           axis=axis,
+           legend=False)
+
+    # plot percentiles
+    SubPlot(3)
+
+    xs_cdf = thinkstats2.Cdf(xs)
+    lower = xs_cdf.Percentile(1)
+    upper = xs_cdf.Percentile(99)
+
+    bins = np.arange(lower, upper, nbins)
+    indices = np.digitize(xs, bins)
+    groups = cleaned.groupby(indices)
+    mean_xs = [group[xlabel].mean() for i, group in groups]
+    cdfs = [thinkstats2.Cdf(group[ylabel]) for i, group in groups]
+
+    for percent in [75, 50, 25]:
+        y_percentiles = [cdf.Percentile(percent) for cdf in cdfs]
+        label = '%dth' % percent
+        Plot(mean_xs, y_percentiles, label=label)
+
+    Config(xlabel=xlabel,
+           ylabel=ylabel,
+           axis=axis,
+           legend=True)
+
+    # plot CDFs
+    n = (upper-lower) // (nbins - 2)
+    bins = np.arange(lower, upper, n)
+    indices = np.digitize(cleaned[xlabel], bins)
+    groups = cleaned.groupby(indices)
+    mean_xs = [group[xlabel].mean() for i, group in groups]
+    cdfs = [thinkstats2.Cdf(group[ylabel]) for i, group in groups]
+
+    ## plot the cdfs
+    SubPlot(4)
+    PrePlot(len(cdfs))
+    for i, cdf in enumerate(cdfs):
+        if i==0:
+            label='<%d ' %bins[0] + xlabel
+        elif i==len(cdfs)-1:
+            label='>%d ' %bins[-1] + xlabel
+        else:
+            label = '%d - %d ' % (bins[i-1], bins[i]) + xlabel
+        Cdf(cdf, label=label)
+        Config(xlabel=ylabel,
+                       ylabel='CDF',
+                       legend=True)
+
+    #print statistics
+    print('Correlation:\n',
+            thinkstats2.Corr(xs, ys))
+    print('Spearman Correlation Coefficient:\n',
+            thinkstats2.SpearmanCorr(xs, ys))
+
+
 def Pdf(pdf, **options):
     """Plots a Pdf, Pmf, or Hist as a line.
 
